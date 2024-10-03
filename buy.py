@@ -25,6 +25,16 @@ from config import *
 
 from construct import Struct, Int64ul, Flag
 
+import builtins
+import time
+
+# Save the original print function
+original_print = builtins.print
+
+# Define a new print function with timestamps
+def print(*args, **kwargs):
+    original_print(time.strftime("%Y-%m-%d %H:%M:%S"), *args, **kwargs)
+
 # Here and later all the discriminators are precalculated. See learning-examples/discriminator.py
 EXPECTED_DISCRIMINATOR = struct.pack("<Q", 6966180631402821399)
 TOKEN_DECIMALS = 6

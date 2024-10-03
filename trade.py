@@ -31,6 +31,19 @@ from buy import get_pump_curve_state, calculate_pump_curve_price, buy_token, lis
 # Import functions from sell.py
 from sell import sell_token
 
+from analytics import HolderCountAnalyzer
+
+import builtins
+import time
+
+# Save the original print function
+original_print = builtins.print
+
+# Define a new print function with timestamps
+def print(*args, **kwargs):
+    original_print(time.strftime("%Y-%m-%d %H:%M:%S"), *args, **kwargs)
+
+
 def log_trade(action, token_data, price, tx_hash):
     os.makedirs("trades", exist_ok=True)
     log_entry = {
@@ -114,8 +127,60 @@ async def _trade(websocket, match_string=None, bro_address=None, marry_mode=Fals
 
         if not yolo_mode:
             break
+        
+# Listen for new token creation
+async def monitorTokenCreation():
+        while True:
+            async with websockets.connect(WSS_ENDPOINT) as websocket:
+                print("Waiting for a new token creation...")
+                token_data = await listen_for_create_transaction(websocket)
+                print("New token created:")
+                print(json.dumps(token_data, indent=2))
+                
+                # Get number of async tasks running
+                tasks = asyncio.all_tasks()
+                print(f"Number of tasks running: {len(tasks)}")
+                
+                # If the number of tasks is less than 200, start a new task to analyze the token
+                if len(tasks) < 200:
+                    # Create a background task to fetch holder count without blocking
+                    print("Analyser started for mint address: ", token_data['mint'])
+                    asyncio.create_task(analyser(token_data))
+                else:
+                    print("Too many tasks running. Skipping analyser...")
+                
+# Analyser function
+async def analyser(token_data):
+    try:
+        async with AsyncClient(RPC_ENDPOINT) as client:
+            # For HolderCountAnalyzer
+            holder_count_analyzer = HolderCountAnalyzer(client, token_data['user'], token_data['bondingCurve'])
+            print("Waiting for 5 seconds before fetching holder count...")
+            # Look for the top holders of the new token
+            currentEpochTime = int(time.time())
+            for i in range(12 * 5): # 5 minutes
+                iterationStartTime = time.time()
+                proceed = await holder_count_analyzer.make_decision(Pubkey.from_string(token_data['mint']), holder_threshold=35, dev_threshold=1, lp_threshold_lower=60, lp_threshold_upper=80, startEpochTime=currentEpochTime)
+                
+                # Iteration time spent
+                print(f"Iteration {i+1} for mint address {token_data['mint']} completed. Time spent: {time.time() - iterationStartTime}")
+                if not proceed:
+                    break
+                await asyncio.sleep(5)
+            
+            # TODO: For Other Analyzers
+            
+    except Exception as e:
+        print(f"Error fetching holder count: {e}")
 
-async def main(yolo_mode=False, match_string=None, bro_address=None, marry_mode=False):
+async def main(yolo_mode=False, match_string=None, bro_address=None, marry_mode=False, monitor_mode=True):
+    if monitor_mode:
+        while True:
+            try:
+                await monitorTokenCreation()
+            except Exception as e:
+                print(f"An error occurred: {e}")
+        
     if yolo_mode:
         while True:
             try:
@@ -153,5 +218,6 @@ if __name__ == "__main__":
     parser.add_argument("--match", type=str, help="Only trade tokens with names or symbols matching this string")
     parser.add_argument("--bro", type=str, help="Only trade tokens created by this user address")
     parser.add_argument("--marry", action="store_true", help="Only buy tokens, skip selling")
+    parser.add_argument("--monitor", action="store_true", help="Monitor token creation without trading")
     args = parser.parse_args()
     asyncio.run(main(yolo_mode=args.yolo, match_string=args.match, bro_address=args.bro, marry_mode=args.marry))
