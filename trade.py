@@ -131,23 +131,31 @@ async def _trade(websocket, match_string=None, bro_address=None, marry_mode=Fals
 # Listen for new token creation
 async def monitorTokenCreation():
         while True:
-            async with websockets.connect(WSS_ENDPOINT) as websocket:
-                print("Waiting for a new token creation...")
-                token_data = await listen_for_create_transaction(websocket)
-                print("New token created:")
-                print(json.dumps(token_data, indent=2))
-                
-                # Get number of async tasks running
-                tasks = asyncio.all_tasks()
-                print(f"Number of tasks running: {len(tasks)}")
-                
-                # If the number of tasks is less than 200, start a new task to analyze the token
-                if len(tasks) < 200:
-                    # Create a background task to fetch holder count without blocking
-                    print("Analyser started for mint address: ", token_data['mint'])
-                    asyncio.create_task(analyser(token_data))
-                else:
-                    print("Too many tasks running. Skipping analyser...")
+            try:
+                async with websockets.connect(WSS_ENDPOINT) as websocket:
+                    print("Waiting for a new token creation...")
+                    token_data = await listen_for_create_transaction(websocket)
+            except websockets.exceptions.ConnectionClosed:
+                print("WebSocket connection closed. Reconnecting...")
+                continue
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                continue
+            
+            print("New token created:")
+            print(json.dumps(token_data, indent=2))
+            
+            # Get number of async tasks running
+            tasks = asyncio.all_tasks()
+            print(f"Number of tasks running: {len(tasks)}")
+            
+            # If the number of tasks is less than 200, start a new task to analyze the token
+            if len(tasks) < 200:
+                # Create a background task to fetch holder count without blocking
+                print("Analyser started for mint address: ", token_data['mint'])
+                asyncio.create_task(analyser(token_data))
+            else:
+                print("Too many tasks running. Skipping analyser...")
                 
 # Analyser function
 async def analyser(token_data):
@@ -158,15 +166,15 @@ async def analyser(token_data):
             print("Waiting for 5 seconds before fetching holder count...")
             # Look for the top holders of the new token
             currentEpochTime = int(time.time())
-            for i in range(12 * 5): # 5 minutes
+            for i in range(60 * 6): # 6 minutes
                 iterationStartTime = time.time()
-                proceed = await holder_count_analyzer.make_decision(Pubkey.from_string(token_data['mint']), holder_threshold=35, dev_threshold=1, lp_threshold_lower=60, lp_threshold_upper=80, startEpochTime=currentEpochTime)
+                proceed = await holder_count_analyzer.make_decision(Pubkey.from_string(token_data['mint']), holder_threshold=35, dev_threshold=1, lp_threshold_lower=65, lp_threshold_upper=85, startEpochTime=currentEpochTime, timeLimit=100)
                 
                 # Iteration time spent
                 print(f"Iteration {i+1} for mint address {token_data['mint']} completed. Time spent: {time.time() - iterationStartTime}")
                 if not proceed:
                     break
-                await asyncio.sleep(5)
+                await asyncio.sleep(1)
             
             # TODO: For Other Analyzers
             

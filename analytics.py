@@ -282,33 +282,51 @@ class HolderCountAnalyzer:
                 return True
         print(f"LP liquidity does not meet the threshold of {thresholdLower}% to {thresholdUpper}%.")
         return False
+    
+    # Check if within the time limit
+    async def check_time_limit(self, startEpochTime: int = 0, timeLimit: int = 100):
+        if int(time.time()) - startEpochTime <= timeLimit:
+            print(f"Within the time limit of {timeLimit} seconds.")
+            return True
+        print(f"Time limit exceeded ({timeLimit} seconds).")
+        return False
         
     # Decision maker for HolderCountAnalyzer
     # Check if the number of unique holders exceeds the threshold
     # Check if the dev wallet has sold all tokens
     # Check if LP liquidity (BondingCurve) meets the threshold
-    async def make_decision(self, mint_address: Pubkey, holder_threshold: int = 35, dev_threshold: int = 1, lp_threshold_lower: int = 70, lp_threshold_upper: int = 80, startEpochTime: int = 0): 
+    # Check if within the time limit
+    async def make_decision(self, mint_address: Pubkey, holder_threshold: int = 35, dev_threshold: int = 1, lp_threshold_lower: int = 70, lp_threshold_upper: int = 80, startEpochTime: int = 0, timeLimit: int = 100): 
         try:
+            print("At second since epoch: ", int(time.time()) - startEpochTime)
             top_holders = await self.get_top_holders(mint_address, top_n=20)
             if not top_holders:
                 print("No top holders found or an error occurred. Skipping further analysis.")
                 return True
             await self.display_top_holders(mint_address, top_n=20, top_holders=top_holders)
+            time_met = await self.check_time_limit(startEpochTime, timeLimit)
             holder_count_met = await self.check_holder_count(mint_address, holder_threshold)
             dev_wallet_sold = await self.check_dev_wallet_sold(mint_address, dev_threshold, top_holders)
             lp_liquidity_met = await self.check_lp_liquidity(mint_address, lp_threshold_lower, lp_threshold_upper, top_holders)
             
-            print("At second since epoch: ", int(time.time()) - startEpochTime)
-            if holder_count_met and dev_wallet_sold and lp_liquidity_met:
+            if holder_count_met and dev_wallet_sold and lp_liquidity_met and time_met:
                 print("All conditions met. Proceed with the next step.")
+                return False
             else:
                 print("Conditions not met. Waiting for further analysis.")
             
+            # No longer needed to track if the dev wallet has no more holders
             for holder in top_holders:
                 if holder['address'] == str(self.bonding_curve_pubkey):
                     if holder['percentage'] >= 99:
                         print("No holders left in the bonding curve. Exiting...")
                         return False
+            
+            # No longer needed to track if time limit is exceeded
+            if not time_met:
+                print("Time limit exceeded. Exiting...")
+                return False
+            
             return True
         except Exception as e:
             print(f"Exception in make_decision: {e}")
