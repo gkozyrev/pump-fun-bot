@@ -312,6 +312,12 @@ class HolderCountAnalyzer:
             if holder_count_met and dev_wallet_sold and lp_liquidity_met and time_met:
                 print("All conditions met. Proceed with the next step.")
                 return False
+            # TODO: Hardcoded conditions for now  
+            # 60 holders, dev holding, liquidity 60 - 80, 6 minutes
+            elif await self.check_holder_count(mint_address, 60) and await self.check_lp_liquidity(mint_address, 60, 80, top_holders) and time_met and not dev_wallet_sold:
+                print("Special conditions met. Proceed with the next step.")
+                print("Conditions: 60 holders, LP liquidity 60 - 80, dev wallet still holding, within 100 seconds.")
+                return False
             else:
                 print("Conditions not met. Waiting for further analysis.")
             
