@@ -19,13 +19,24 @@ SELL_SLIPPAGE = 0.05  # 5% slippage tolerance for selling
 
 # Your nodes
 # You can also get a trader node https://docs.chainstack.com/docs/warp-transactions
-RPC_ENDPOINT = "https://solana-mainnet.core.chainstack.com/12a947cc52af1fecbb9981620fe19b5e"
-WSS_ENDPOINT = "wss://solana-mainnet.core.chainstack.com/12a947cc52af1fecbb9981620fe19b5e"
+# RPC_ENDPOINT = "https://solana-mainnet.core.chainstack.com/12a947cc52af1fecbb9981620fe19b5e"
+# WSS_ENDPOINT = "wss://solana-mainnet.core.chainstack.com/12a947cc52af1fecbb9981620fe19b5e"
+
+RPC_ENDPOINT = "https://solana-mainnet.core.chainstack.com/15bccaec0ac21c2d02b2117c82376b26"
+WSS_ENDPOINT = "wss://solana-mainnet.core.chainstack.com/15bccaec0ac21c2d02b2117c82376b26"
 
 # Helius API
-RPC_ENDPOINT_HELIUS = "https://mainnet.helius-rpc.com/?api-key=6f4f0ef0-5ac1-4320-b03a-4d1ef3269de7"
-WSS_ENDPOINT_HELIUS = "wss://mainnet.helius-rpc.com/?api-key=6f4f0ef0-5ac1-4320-b03a-4d1ef3269de7"
-API_KEY_HELIUS = "6f4f0ef0-5ac1-4320-b03a-4d1ef3269de7"
+# RPC_ENDPOINT_HELIUS = "https://mainnet.helius-rpc.com/?api-key=6f4f0ef0-5ac1-4320-b03a-4d1ef3269de7"
+# WSS_ENDPOINT_HELIUS = "wss://mainnet.helius-rpc.com/?api-key=6f4f0ef0-5ac1-4320-b03a-4d1ef3269de7"
+# API_KEY_HELIUS = "6f4f0ef0-5ac1-4320-b03a-4d1ef3269de7"
+
+# RPC_ENDPOINT_HELIUS = "https://mainnet.helius-rpc.com/?api-key=922b7383-8476-4ab9-b0ee-8d5e780f0542"
+# WSS_ENDPOINT_HELIUS = "wss://mainnet.helius-rpc.com/?api-key=922b7383-8476-4ab9-b0ee-8d5e780f0542"
+# API_KEY_HELIUS = "922b7383-8476-4ab9-b0ee-8d5e780f0542"
+
+RPC_ENDPOINT_HELIUS = "https://mainnet.helius-rpc.com/?api-key=ea3370f2-33fa-4e34-9686-2fa0f839cccc"
+WSS_ENDPOINT_HELIUS = "wss://mainnet.helius-rpc.com/?api-key=ea3370f2-33fa-4e34-9686-2fa0f839cccc"
+API_KEY_HELIUS = "ea3370f2-33fa-4e34-9686-2fa0f839cccc"
 
 #Private key
 PRIVATE_KEY = "SOLANA_PRIVATE_KEY"

@@ -168,7 +168,7 @@ async def analyser(token_data):
             currentEpochTime = int(time.time())
             for i in range(60 * 6): # 6 minutes
                 iterationStartTime = time.time()
-                proceed = await holder_count_analyzer.make_decision(Pubkey.from_string(token_data['mint']), holder_threshold=35, dev_threshold=1, lp_threshold_lower=65, lp_threshold_upper=85, startEpochTime=currentEpochTime, timeLimit=100)
+                proceed = await holder_count_analyzer.make_decision(Pubkey.from_string(token_data['mint']), holder_threshold=30, dev_threshold=1, lp_threshold_lower=75, lp_threshold_upper=95, startEpochTime=currentEpochTime, timeLimit=100)
                 
                 # Iteration time spent
                 print(f"Iteration {i+1} for mint address {token_data['mint']} completed. Time spent: {time.time() - iterationStartTime}")
