@@ -25,6 +25,16 @@ from config import *
 
 from construct import Struct, Int64ul, Flag
 
+import builtins
+import time
+
+# Save the original print function
+original_print = builtins.print
+
+# Define a new print function with timestamps
+def print(*args, **kwargs):
+    original_print(time.strftime("%Y-%m-%d %H:%M:%S"), *args, **kwargs)
+
 # Here and later all the discriminators are precalculated. See learning-examples/discriminator.py
 EXPECTED_DISCRIMINATOR = struct.pack("<Q", 6966180631402821399)
 TOKEN_DECIMALS = 6
@@ -219,7 +229,7 @@ async def listen_for_create_transaction(websocket):
                 await websocket.ping()
                 last_ping_time = current_time
 
-            response = await asyncio.wait_for(websocket.recv(), timeout=30)
+            response = await asyncio.wait_for(websocket.recv(), timeout=5)
             data = json.loads(response)
             
             if 'method' in data and data['method'] == 'blockNotification':
@@ -244,9 +254,11 @@ async def listen_for_create_transaction(websocket):
                                                 decoded_args = decode_create_instruction(ix_data, create_ix, account_keys)
                                                 return decoded_args
         except asyncio.TimeoutError:
-            print("No data received for 30 seconds, sending ping...")
-            await websocket.ping()
-            last_ping_time = time.time()
+            print("No data received for 5 seconds, sending ping...")
+            # await websocket.ping()
+            # last_ping_time = time.time()
+            # Reconnect straight away
+            raise
         except websockets.exceptions.ConnectionClosed:
             print("WebSocket connection closed. Reconnecting...")
             raise
